@@ -4,3 +4,6 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+defmt-rtt = "1.1.0"
+embassy = "0.0.0"
+panic-probe = "1.0.0"
