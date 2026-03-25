@@ -1,40 +1,22 @@
-# embedded_oscilloscope
+# Mixed Signal Analyser
 
-Bare-metal oscilloscope, waveform generator, and data logger on the 
-STM32F401RE NUCLEO board. Firmware in Rust + embassy. Host tooling in Go.
+A full-stack, register-level mixed signal analyser that captures and processes both **analogue** and **digital** signals using a three-layer architecture.
 
-> Scoppy does this for the Pi Pico. This does it for the STM32.
+Built as a real engineering instrument — not a toy — spanning embedded Rust, backend systems, and a terminal UI.
 
-## Status
+---
 
-`init` — Week 1/26. Workspace scaffolded, container environment running.
-Follow the build log in [DEVLOG.md](DEVLOG.md).
+## ✨ Overview
 
-## Hardware
+This project implements a mixed signal analyser similar to a logic analyser + oscilloscope hybrid.
 
-| | |
-|---|---|
-| Board | NUCLEO-F401RE · Cortex-M4F @ 84 MHz |
-| ADC | 12-bit · ~1 MSPS via DMA · PA0 |
-| DAC | 12-bit · PA4 · DMA + TIM6 |
-| Loopback | PA4 → PA0 · 1kΩ series resistor |
-| Interface | USART2 · onboard USB-UART |
-| Button | PC13 · autosetting + mode control |
-| LED | PA5 · status + health check |
+It supports:
 
-## Architecture
-```
-stm32_fw          →   instrument_core   →   host_processor   →   tui
-Rust · embassy        no_std · shared       Rust · std            Go · bubbletea
-thumbv7em             thumbv7em+x86         FFT · HDF5            braille waveform
-```
+- **Analogue signal capture** (via ADC)
+- **Digital signal decoding** (GPIO, UART, SPI, I2C)
+- **Real-time streaming** via gRPC
+- **Terminal-based UI** for visualization
 
-## Running
-```bash
-# flash firmware (requires probe-rs + board connected)
-cargo build --release --target thumbv7em-none-eabihf -p stm32_fw
+The system is composed of **three independent programs**, written in **two languages**, connected via **gRPC**, and fully **containerised using Podman**.
 
-# start host stack
-podman-compose up -d --build
-```
-
+---
