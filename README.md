@@ -20,3 +20,21 @@ It supports:
 The system is composed of **three independent programs**, written in **two languages**, connected via **gRPC**, and fully **containerised using Podman**.
 
 ---
+```bash
+system_profiler SPUSBDataType | grep -A8 "STM\|STLINK\|ST-Link\|0483"
+```
+
+FLASHING 
+```bash
+# build inside OrbStack
+orb run -p -w /Users/vincentiumocanu/Documents/Rust/embedded_mixed_signal_analyzer msa \
+  cargo build --release --target thumbv7em-none-eabihf
+
+# flash from Mac
+probe-rs run --chip STM32F401RETx \
+  target/thumbv7em-none-eabihf/release/embedded_oscilloscope
+
+# inspect binary size (inside container)
+orb run -w /Users/vincentiumocanu/Documents/Rust/embedded_mixed_signal_analyzer msa \
+  cargo size --release --target thumbv7em-none-eabihf
+```
