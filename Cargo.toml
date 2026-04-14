@@ -15,3 +15,12 @@ panic-probe   = { version = "1.0", features = ["print-defmt"] }
 cortex-m      = { version = "0.7", features = ["inline-asm", "critical-section-single-core"] }
 cortex-m-rt   = "0.7"
 critical-section = "1.0"
+minifb = "0.28.0"
+
+[workspace]
+members = [
+    "firmware",
+    "host",
+    "shared",
+]
+resolver = "2"
