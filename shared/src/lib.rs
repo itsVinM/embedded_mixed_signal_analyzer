@@ -1,14 +1,27 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
+#![no_std]
+
+#[derive(Debug, PartialEq)]
+pub enum HealthStatus{
+    Ready, 
+    Fail(HealthError),
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+#[derive(Debug, PartialEq)]
+pub enum HealthError{
+    AdcCalibration, 
+    TimerNotTicking,
+    ClockOutOfRange,
+}
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+
+// Real-time transfer check 
+impl HealthError{
+    pub fn as_str(&self) -> &'static str {
+        match self{
+            HealthStatus::Ready => "READY: adc, tim, clk\n",
+            HealthStatus::Fail(HealthError::AdcCalibration) => "FAIL:adc\n",
+            HealthStatus::Fail(HealthError::TimerNotTicking) => "FAIL:tim\n",
+            HealthStatus::Fail(HealthError::ClockOutOfRange) => "FAIL:clk\n",
+        }
     }
 }

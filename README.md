@@ -38,3 +38,10 @@ probe-rs run --chip STM32F401RETx \
 orb run -w /Users/vincentiumocanu/Documents/Rust/embedded_mixed_signal_analyzer msa \
   cargo size --release --target thumbv7em-none-eabihf
 ```
+
+```bash
+probe-rs run --chip STM32F401RETx \
+  --connect-under-reset \
+  --speed 100 \
+  target/thumbv7em-none-eabihf/release/embedded_oscilloscope
+```
