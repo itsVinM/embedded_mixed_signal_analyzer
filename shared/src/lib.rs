@@ -15,7 +15,7 @@ pub enum HealthError{
 
 
 // Real-time transfer check 
-impl HealthError{
+impl HealthStatus{
     pub fn as_str(&self) -> &'static str {
         match self{
             HealthStatus::Ready => "READY: adc, tim, clk\n",

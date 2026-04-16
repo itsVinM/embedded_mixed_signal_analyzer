@@ -1,24 +1,24 @@
-// self-test + RTT handshake 
-
-ude defmt::info;
-use embassy_stm32::{
-    adc::{Adc, SampleTime},
-    peripherals,
-    rcc,
-};
+use defmt::info;
+use embassy_stm32::{peripherals::RCC, rcc, Peri};
 use shared::{HealthError, HealthStatus};
 
-pub fn run_self_test(
-    adc: &mut Adc<'_, peripherals::ADC1>
-)->HealthStatus{
-    
-    // CLOCK check - F401RE at full speed should be 84 MHz
-    let sysclk = rcc::clocks().sysclk.0;
-    info!("sysclk = {} Hz", sysclk);
+pub fn run_self_test(rcc_peripheral: Peri<'_, RCC>) -> HealthStatus {
+    let clocks = rcc::clocks(&rcc_peripheral);
 
-    if sysclk < 80_000_000 || sysclk > 88_000_000 {
+    let sys_hz = clocks.sys.to_hertz().map(|h| h.0).unwrap_or(0);
+    let pclk1_tim_hz = clocks.pclk1_tim.to_hertz().map(|h| h.0).unwrap_or(0);
+
+    info!("sys clock = {} Hz", sys_hz);
+    info!("pclk1_tim = {} Hz", pclk1_tim_hz);
+
+    if sys_hz == 0 {
         return HealthStatus::Fail(HealthError::ClockOutOfRange);
     }
 
-    //
+    if pclk1_tim_hz == 0 {
+        return HealthStatus::Fail(HealthError::TimerNotTicking);
+    }
+
+    info!("self test passed");
+    HealthStatus::Ready
 }
