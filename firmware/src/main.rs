@@ -5,6 +5,10 @@ use defmt::info;
 use defmt_rtt as _;
 use embassy_executor::Spawner;
 use embassy_stm32::gpio::{Level, Output, Speed};
+use embassy_stm32::rcc::{
+    APBPrescaler, Pll, PllMul, PllPDiv, PllPreDiv, PllSource, Sysclk,
+};
+use embassy_stm32::Config;
 use panic_probe as _;
 use shared::HealthStatus;
 
@@ -12,7 +16,22 @@ mod health;
 
 #[embassy_executor::main]
 async fn main(_spawner: Spawner) {
-    let peripherals = embassy_stm32::init(Default::default());
+
+    // ==== CLOCK TREE CONFIG ======
+    let mut config = Config::default();
+    config.rcc.pll = Some(Pll {
+        prediv: PllPreDiv::Div8,   // M=8
+        mul: PllMul::Mul168,       // N=168
+        divp: Some(PllPDiv::Div4), // P=4 → 84 MHz
+        divq: None,
+        divr: None,
+    });
+    config.rcc.pll_src = PllSource::Hsi;
+    config.rcc.sys = Sysclk::Pll1P;
+    config.rcc.apb1_pre = APBPrescaler::Div2;  // 84/2 = 42 MHz — within limit
+    config.rcc.apb2_pre = APBPrescaler::Div1;  // 84/1 = 84 MHz 
+
+    let peripherals = embassy_stm32::init(config);
     info!("booting...");
 
     health_check(peripherals).await;
