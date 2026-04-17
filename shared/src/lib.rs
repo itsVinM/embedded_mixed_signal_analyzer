@@ -8,9 +8,22 @@ pub enum HealthStatus{
 
 #[derive(Debug, PartialEq)]
 pub enum HealthError{
-    AdcCalibration, 
+    // Memory
+    StackCanary,
+    RamTest,
+    FlashCRC,
+    
+    // Clocks
     TimerNotTicking,
     ClockOutOfRange,
+
+    // Peripherals
+    AdcCalibration, 
+    I2cInitFailed,
+    SpiInitFailed,
+    UartInitFailed,
+    DmaInitFailed,
+
 }
 
 
@@ -18,10 +31,17 @@ pub enum HealthError{
 impl HealthStatus{
     pub fn as_str(&self) -> &'static str {
         match self{
-            HealthStatus::Ready => "READY: adc, tim, clk\n",
+            HealthStatus::Ready => "READY\n",
             HealthStatus::Fail(HealthError::AdcCalibration) => "FAIL:adc\n",
             HealthStatus::Fail(HealthError::TimerNotTicking) => "FAIL:tim\n",
             HealthStatus::Fail(HealthError::ClockOutOfRange) => "FAIL:clk\n",
+            HealthStatus::Fail(HealthError::StackCanary)    => "FAIL:stack\n",
+            HealthStatus::Fail(HealthError::RamTest)        => "FAIL:ram\n",
+            HealthStatus::Fail(HealthError::FlashCRC)       => "FAIL:flash\n",
+            HealthStatus::Fail(HealthError::I2cInitFailed)  => "FAIL:i2c\n",
+            HealthStatus::Fail(HealthError::SpiInitFailed)  => "FAIL:spi\n",
+            HealthStatus::Fail(HealthError::UartInitFailed) => "FAIL:uart\n",
+            HealthStatus::Fail(HealthError::DmaInitFailed)     => "FAIL:dma\n",
         }
     }
 }
