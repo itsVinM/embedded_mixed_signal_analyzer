@@ -2,14 +2,9 @@ use defmt::info;
 use shared::{HealthError, HealthStatus};
 
 // Embassy imports
-use embassy_stm32::{i2c, rcc, Peri, spi};
-use embassy_stm32::peripherals::{
-    I2C1, PB8, PB9, RCC, 
-    ADC1, 
-    SPI2, PB13, PB14, PB15, 
-    USART1, PA9};
-use embassy_stm32::adc::Adc;
-use embassy_stm32::usart::UartTx;
+use embassy_stm32::peripherals::RCC;
+use embassy_stm32::{rcc, Peri};
+  
 
 
 pub fn check_clock(
@@ -42,65 +37,6 @@ pub fn check_clock(
 
 
     info!("clock init ok");
-    HealthStatus::Ready
-}
-
-
-pub fn check_i2c(
-    i2c: Peri<'_, I2C1>,
-    scl: Peri<'_, PB8>,
-    sda: Peri<'_, PB9>,
-)-> HealthStatus {
-    let _i2c_driver = i2c::I2c::new_blocking(
-        i2c,                                // I2C1 peripheral
-        scl,                                // clock pin
-        sda,                                // data pin
-        Default::default(),                 // config
-    );
-    info!("I2C init succeeded");
-    HealthStatus::Ready
-}
-
-pub fn check_spi(
-    spi:  Peri<'_, SPI2>,
-    sck:  Peri<'_, PB13>,
-    miso: Peri<'_, PB14>,
-    mosi: Peri<'_, PB15>,
-) -> HealthStatus {
-    let _spi_driver = spi::Spi::new_blocking(
-        spi, 
-        sck,
-        mosi,
-        miso,
-        Default::default(),
-    );
-    info!("Spi init succeeded");
-    HealthStatus::Ready
-}
-
-pub fn check_uart(
-    uart:  Peri<'_, USART1>,
-    tx:  Peri<'_, PA9>,
-) -> HealthStatus {
-    match UartTx::new_blocking(uart, tx, Default::default()) {
-        Ok(_)  => {
-            info!("UART init succeeded");
-            HealthStatus::Ready
-        }
-        Err(_) => {
-            info!("UART init FAILED");
-            HealthStatus::Fail(HealthError::UartInitFailed)
-        }
-    }
-}
-
-pub fn check_adc(
-    adc: Peri<'_, ADC1>
- ) -> HealthStatus {
-    let _adc_driver = Adc::new(
-        adc,
-    );
-    info!("Adc init succedded");
     HealthStatus::Ready
 }
 

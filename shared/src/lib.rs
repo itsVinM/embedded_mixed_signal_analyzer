@@ -1,37 +1,32 @@
-#![no_std]
+#![cfg_attr(not(test), no_std)]
 
 #[derive(Debug, PartialEq)]
-pub enum HealthStatus{
-    Ready, 
+pub enum HealthStatus {
+    Ready,
     Fail(HealthError),
 }
 
 #[derive(Debug, PartialEq)]
-pub enum HealthError{
+pub enum HealthError {
     // Memory
     StackCanary,
     RamTest,
     FlashCRC,
-    
     // Clocks
     TimerNotTicking,
     ClockOutOfRange,
-
     // Peripherals
-    AdcCalibration, 
+    AdcCalibration,
     I2cInitFailed,
     SpiInitFailed,
     UartInitFailed,
     DmaInitFailed,
-
 }
 
-
-// Real-time transfer check 
-impl HealthStatus{
+impl HealthStatus {
     pub fn as_str(&self) -> &'static str {
-        match self{
-            HealthStatus::Ready => "READY\n",
+        match self {
+            HealthStatus::Ready                              => "READY\n",
             HealthStatus::Fail(HealthError::AdcCalibration) => "FAIL:adc\n",
             HealthStatus::Fail(HealthError::TimerNotTicking) => "FAIL:tim\n",
             HealthStatus::Fail(HealthError::ClockOutOfRange) => "FAIL:clk\n",
@@ -41,7 +36,29 @@ impl HealthStatus{
             HealthStatus::Fail(HealthError::I2cInitFailed)  => "FAIL:i2c\n",
             HealthStatus::Fail(HealthError::SpiInitFailed)  => "FAIL:spi\n",
             HealthStatus::Fail(HealthError::UartInitFailed) => "FAIL:uart\n",
-            HealthStatus::Fail(HealthError::DmaInitFailed)     => "FAIL:dma\n",
+            HealthStatus::Fail(HealthError::DmaInitFailed)  => "FAIL:dma\n",
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn ready_status_returns_correct_string() {
+        assert_eq!(HealthStatus::Ready.as_str(), "READY\n");
+    }
+
+    #[test]
+    fn fail_adc_returns_correct_string() {
+        let status = HealthStatus::Fail(HealthError::AdcCalibration);
+        assert_eq!(status.as_str(), "FAIL:adc\n");
+    }
+
+    #[test]
+    fn fail_clock_returns_correct_string() {
+        let status = HealthStatus::Fail(HealthError::ClockOutOfRange);
+        assert_eq!(status.as_str(), "FAIL:clk\n");
     }
 }

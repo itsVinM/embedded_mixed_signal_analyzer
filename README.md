@@ -45,3 +45,5 @@ probe-rs run --chip STM32F401RETx \
   --speed 100 \
   target/thumbv7em-none-eabihf/release/embedded_oscilloscope
 ```
+
+![alt text](<Screenshot 2026-04-17 at 20.36.45.png>)
