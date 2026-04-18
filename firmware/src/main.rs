@@ -14,9 +14,10 @@ use panic_probe as _;
 use shared::HealthStatus;
 
 mod health;
+mod analog;
 
 #[embassy_executor::main]
-async fn main(_spawner: Spawner) {
+async fn main(spawner: Spawner) {
 
     // ==== CLOCK TREE CONFIG ======
     let mut config = Config::default();
@@ -35,6 +36,12 @@ async fn main(_spawner: Spawner) {
     let peripherals = embassy_stm32::init(config);
     info!("booting...");
     health_check(peripherals.RCC).await;
+
+    spawner.spawn(analog::adc_task(
+    peripherals.ADC1,
+    peripherals.DMA2_CH0,
+    peripherals.PA0,
+    ).unwrap())
 }
 
 
