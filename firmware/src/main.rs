@@ -15,6 +15,7 @@ use shared::HealthStatus;
 
 mod health;
 mod analog;
+mod digital;
 
 #[embassy_executor::main]
 async fn main(spawner: Spawner) {
@@ -38,9 +39,10 @@ async fn main(spawner: Spawner) {
     health_check(peripherals.RCC).await;
 
     spawner.spawn(analog::adc_task(
-    peripherals.ADC1,
-    peripherals.DMA2_CH0,
-    peripherals.PA0,
+        peripherals.ADC1,
+        peripherals.DMA2_CH0,
+        peripherals.PA0,
+        peripherals.PA1,
     ).unwrap())
 }
 
