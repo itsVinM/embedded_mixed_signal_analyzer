@@ -37,3 +37,8 @@ lto = true
 [profile.dev]
 opt-level = "z"
 debug = 2
+
+[features]
+default = ["analog"]
+analog = []
+digital = []

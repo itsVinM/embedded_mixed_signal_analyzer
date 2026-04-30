@@ -47,3 +47,10 @@ probe-rs run --chip STM32F401RETx \
 ```
 
 ![alt text](<Screenshot 2026-04-17 at 20.36.45.png>)
+
+```bash
+cargo run                                                   # Analog mode
+cargo run --no-default-features --features digital          # Digital mode
+cargo run --no-default-features --features "analog,digital"
+cargo run --no-default-features                             # No features
+```

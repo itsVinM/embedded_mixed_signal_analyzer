@@ -38,12 +38,45 @@ async fn main(spawner: Spawner) {
     info!("booting...");
     health_check(peripherals.RCC).await;
 
-    spawner.spawn(analog::adc_task(
-        peripherals.ADC1,
-        peripherals.DMA2_CH0,
-        peripherals.PA0,
-        peripherals.PA1,
-    ).unwrap())
+    #[cfg(feature = "analog")]
+    {
+        info!("=== ANALOG MODE ===");
+        spawner.spawn(analog::adc_task(
+            peripherals.ADC1,
+            peripherals.DMA2_CH0,
+            peripherals.PA0,
+            peripherals.PA1,
+        ).unwrap())
+    }
+
+    #[cfg(feature = "digital")]
+    {
+        // PWM OUTPUT: PA8, PA9, PA10, PA11 (TIM1 Ch1-4)
+        spawner.spawn(digital::pwm_task(
+            peripherals.TIM1,
+            peripherals.PA8,   // Ch1 - 25% duty
+            peripherals.PA9,   // Ch2 - 50% duty
+            peripherals.PA10,  // Ch3 - 75% duty
+            peripherals.PA11,  // Ch4 - 10% duty
+        ).unwrap());
+ 
+        // INPUT CAPTURE: PA6 (TIM3 Ch1)
+        spawner.spawn(digital::capture_task(
+            peripherals.TIM3,
+            peripherals.PA6,
+        ).unwrap());
+    }
+
+    #[cfg(all(feature = "analog", feature = "digital"))]
+    {
+        info!("!!! Both analog and digital enabled - running BOTH !!!");
+    }
+ 
+    #[cfg(not(any(feature = "analog", feature = "digital")))]
+    {
+        info!("WARNING: No features enabled. Enable 'analog' or 'digital' in Cargo.toml");
+        loop {}
+    }
 }
 
 
