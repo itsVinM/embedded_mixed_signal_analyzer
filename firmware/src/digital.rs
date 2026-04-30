@@ -53,13 +53,13 @@ pub async fn pwm_task(
     );
 
     // Get handles to each channel
-    let (mut ch1, mut ch2, mut ch3, mut ch4) = pwm.split();  // All at once
+    let mut channels = pwm.split();
 
     // Enable all channels
-    ch1.enable();
-    ch2.enable();
-    ch3.enable();
-    ch4.enable();
+    channels.ch1.enable();
+    channels.ch2.enable();
+    channels.ch3.enable();
+    channels.ch4.enable();
 
     info!("╔════════════════════════════════════════════╗");
     info!("║  PWM Task - 4 Channel Generator           ║");
@@ -72,10 +72,10 @@ pub async fn pwm_task(
 
     loop {
         // Set different duty cycles for each channel
-        ch1.set_duty_cycle_fraction(1, 4);  // 25%
-        ch2.set_duty_cycle_fraction(1, 2);  // 50%
-        ch3.set_duty_cycle_fraction(3, 4);  // 75%
-        ch4.set_duty_cycle_fraction(1, 10); // 10%
+        channels.ch1.set_duty_cycle_fraction(1, 4);  // 25%
+        channels.ch2.set_duty_cycle_fraction(1, 2);  // 50%
+        channels.ch3.set_duty_cycle_fraction(3, 4);  // 75%
+        channels.ch4.set_duty_cycle_fraction(1, 10); // 10%
 
         Timer::after_millis(5000).await;
     }
@@ -104,7 +104,7 @@ pub async fn capture_task(
     info!("║  Capture Task - Signal Measurement        ║");
     info!("╚════════════════════════════════════════════╝");
     info!("✓ PA6 (TIM3 Ch1) - Measuring input signal");
-    info!("📌 Connect any PWM output (PA8/PA9/PA10/PA11) → PA6");
+    info!("Connect any PWM output (PA8/PA9/PA10/PA11) → PA6");
 
     loop {
         // Wait between measurements
@@ -116,7 +116,7 @@ pub async fn capture_task(
         let duty_cycle_pct = pwm_input.get_duty_cycle();
 
         info!(
-            "  📊 Period: {} ticks | Width: {} ticks | Duty: {}%",
+            "  Period: {} ticks | Width: {} ticks | Duty: {}%",
             period_ticks, width_ticks, duty_cycle_pct
         );
     }
