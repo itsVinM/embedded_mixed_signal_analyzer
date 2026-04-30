@@ -1,6 +1,7 @@
 use defmt::*;
 use embassy_stm32::gpio::OutputType;
-use embassy_stm32::peripherals::{PA0, PA1, PA6, PA7, TIM1, TIM3, Peri};
+use embassy_stm32::peripherals::{PA6, PA9, TIM1, TIM3};
+use embassy_stm32:: Peri;
 use embassy_stm32::time::khz;
 use embassy_stm32::timer::pwm_input::PwmInput;
 use embassy_stm32::timer::simple_pwm::{PwmPin, SimplePwm};
@@ -17,34 +18,36 @@ pub struct PwmSignal {
     pub duty_cycle_pct: u32,
 }
 
+const CLOCK_SPEED : u32 = 10; // CLOCK SPEED
+
 // PWM OUTPUT TASK - Generates test signal on PA7 (TIM1)
 #[embassy_executor::task]
 pub async fn pwm_task(
     tim1: Peri<'static, TIM1>,
-    pa7: Peri<'static, PA7>,
+    pa7: Peri<'static, PA9>,
 ) -> ! {
-    // Create PWM pin on PA7
-    let ch1_pin = PwmPin::new(pa7, OutputType::PushPull);
+    // Create PWM pin on PA9
+    let ch2_pin = PwmPin::new(pa7, OutputType::PushPull);
 
     // Initialize SimplePwm on TIM1
     let mut pwm = SimplePwm::new(
         tim1,
-        Some(ch1_pin),
-        None,
-        None,
-        None,
-        khz(10),  // Change to khz(100) for 100 kHz testing
+        None,                   // Ch1 - not used
+        Some(ch2_pin),          // Ch2 - PA9
+        None,                   // Ch3 - not used
+        None,                   // Ch4 - not used
+        khz(CLOCK_SPEED),       // Clock speed
         Default::default(),
     );
 
-    let mut ch1 = pwm.ch1();
-    ch1.enable();
+    let mut ch2 = pwm.ch2();
+    ch2.enable();
 
     info!("PWM task started on PA7 @ 10 kHz");
 
     loop {
         // Set duty cycle to 50%
-        ch1.set_duty_cycle_fraction(1, 2);
+        ch2.set_duty_cycle_fraction(1, 2);
         Timer::after_millis(1000).await;
     }
 }
