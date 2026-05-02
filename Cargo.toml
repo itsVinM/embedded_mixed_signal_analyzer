@@ -1,7 +1,7 @@
 [workspace]
 members = [
+    "bootloader",
     "firmware",
-    "host",
     "shared",
 ]
 resolver = "2"

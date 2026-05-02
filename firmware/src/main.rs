@@ -14,11 +14,17 @@ use panic_probe as _;
 use shared::HealthStatus;
 
 mod health;
+mod mpu;
 mod analog;
 mod digital;
 
 #[embassy_executor::main]
 async fn main(spawner: Spawner) {
+
+    // MPU must be configured before any peripheral or memory access.
+    // Regions: flash RO, SRAM RW+XN, peripherals device, stack guard no-access.
+    mpu::init();
+    info!("mpu configured");
 
     // ==== CLOCK TREE CONFIG ======
     let mut config = Config::default();

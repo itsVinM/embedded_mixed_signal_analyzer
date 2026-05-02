@@ -1,56 +1,89 @@
-# Mixed Signal Analyser
+# Mixed Signal Analyser — STM32F401RE
 
-A full-stack, register-level mixed signal analyser that captures and processes both **analogue** and **digital** signals using a three-layer architecture.
+Bare-metal firmware for a mixed signal analyser running on the STM32F401RE (Nucleo-64).
+Written in Rust using the Embassy async executor — no heap, no OS, no RTOS abstraction layer.
 
-Built as a real engineering instrument — not a toy — spanning embedded Rust, backend systems, and a terminal UI.
+---
+
+## What it does
+
+| Subsystem | Hardware | Detail |
+|---|---|---|
+| Analogue capture | PA0, PA1 → ADC1 | DMA ring buffer (4096 samples), interleaved 2-channel, converted to mV |
+| PWM generation | PA8–PA11 → TIM1 | 4 channels at 10 kHz: 25 / 50 / 75 / 10 % duty cycles |
+| PWM input capture | PA6 → TIM3 | Measures period ticks, pulse width, duty cycle % |
+| Boot health checks | RCC, SRAM | Clock tree verification, stack canary (0xDEAD_BEEF), RAM pattern test |
+
+Analogue and digital modes are selected at compile time via feature flags — no branching at runtime.
 
 ---
 
-## ✨ Overview
+## Technical highlights
 
-This project implements a mixed signal analyser similar to a logic analyser + oscilloscope hybrid.
-
-It supports:
-
-- **Analogue signal capture** (via ADC)
-- **Digital signal decoding** (GPIO, UART, SPI, I2C)
-- **Real-time streaming** via gRPC
-- **Terminal-based UI** for visualization
-
-The system is composed of **three independent programs**, written in **two languages**, connected via **gRPC**, and fully **containerised using Podman**.
+- **DMA ring buffer** — ADC samples land in a static `[u16; 4096]` without CPU intervention; Embassy's `into_ring_buffered` drives continuous dual-channel acquisition
+- **Two independent timers** — TIM1 as SimplePwm (output), TIM3 as PwmInput (input capture), wired via `bind_interrupts!`
+- **Boot integrity** — before spawning any task, the firmware verifies the clock tree, writes/reads a stack canary, and pattern-tests 16 words of SRAM using `write_volatile`/`read_volatile`
+- **MPU** — 4 hardware memory protection regions configured before init: flash read-only, SRAM no-execute, peripheral space device memory, stack overflow guard at 0x2000_4000
+- **Custom bootloader** — separate binary at 0x0800_0000; validates application SP and reset vector before writing VTOR and branching via `msr msp` / `bx`
+- **Async on Cortex-M4** — Embassy's cooperative scheduler; tasks yield at `.await` points, no preemption needed
+- **Zero heap** — no `alloc`, no dynamic dispatch; all buffers are static
 
 ---
-```bash
-system_profiler SPUSBDataType | grep -A8 "STM\|STLINK\|ST-Link\|0483"
+
+## Flash layout
+
+```
+0x0800_0000  bootloader  (32 KB — sectors 0–1)
+0x0800_8000  firmware    (480 KB — sectors 2–7)
+0x2000_0000  SRAM        (96 KB)
+0x2000_4000    └── stack overflow guard (256 B, MPU region 3 → MemFault)
+0x2001_8000    └── stack top
 ```
 
-FLASHING 
-```bash
-# build inside OrbStack
-orb run -p -w /Users/vincentiumocanu/Documents/Rust/embedded_mixed_signal_analyzer msa \
-  cargo build --release --target thumbv7em-none-eabihf
+## Build & flash
 
-# flash from Mac
+```bash
+# 1. Flash bootloader
+cd bootloader && cargo build --release
+probe-rs download --chip STM32F401RETx \
+    ../target/thumbv7em-none-eabihf/release/bootloader
+
+# 2. Flash firmware (analogue mode)
+cd ../firmware && cargo build --release
+probe-rs download --chip STM32F401RETx \
+    ../target/thumbv7em-none-eabihf/release/firmware
+
+# 3. Attach RTT and run
 probe-rs run --chip STM32F401RETx \
-  target/thumbv7em-none-eabihf/release/embedded_oscilloscope
+    ../target/thumbv7em-none-eabihf/release/firmware
 
-# inspect binary size (inside container)
-orb run -w /Users/vincentiumocanu/Documents/Rust/embedded_mixed_signal_analyzer msa \
-  cargo size --release --target thumbv7em-none-eabihf
+# Digital mode
+cargo build --release --no-default-features --features digital
 ```
 
-```bash
-probe-rs run --chip STM32F401RETx \
-  --connect-under-reset \
-  --speed 100 \
-  target/thumbv7em-none-eabihf/release/embedded_oscilloscope
+Requires [probe-rs](https://probe.rs) and an ST-Link on the Nucleo board.
+
+---
+
+## Hardware
+
+**Board:** NUCLEO-F401RE  
+**MCU:** STM32F401RE — Cortex-M4 @ 84 MHz (configured via PLL: HSI → /8 → ×168 → /4)
+
+```
+PA0  — ADC1 CH0  (analogue in)
+PA1  — ADC1 CH1  (analogue in)
+PA6  — TIM3 CH1  (PWM capture in)
+PA8  — TIM1 CH1  (PWM out 25%)
+PA9  — TIM1 CH2  (PWM out 50%)
+PA10 — TIM1 CH3  (PWM out 75%)
+PA11 — TIM1 CH4  (PWM out 10%)
 ```
 
-![alt text](<Screenshot 2026-04-17 at 20.36.45.png>)
+---
 
-```bash
-cargo run                                                   # Analog mode
-cargo run --no-default-features --features digital          # Digital mode
-cargo run --no-default-features --features "analog,digital"
-cargo run --no-default-features                             # No features
-```
+## Roadmap
+
+- [ ] Bootloader: CRC-32 verification of firmware image before jump (currently validates SP + reset vector only)
+- [ ] MPU: MemFault handler with defmt stack dump — catch overflows with context, not just a hang
+- [ ] MPU: per-task stack regions — enforce isolation between Embassy async tasks
