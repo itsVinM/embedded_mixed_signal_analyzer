@@ -1,1 +1,0 @@
-// pixel buffer, channel drawing

@@ -1,3 +1,0 @@
-/*
-Shared ring buffer + framing
-*/
